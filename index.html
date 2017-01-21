@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<style>
+.chart div {
+  font: 20px sans-serif;
+  background-color: steelblue;
+  text-align: right;
+  padding: 5px;
+  margin: 2px;
+  color: white;
+}
+</style>
+<body>
+	<div class="chart"> </div>	
+</body>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<script
+  src="https://code.jquery.com/jquery-2.2.4.min.js"
+  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+  crossorigin="anonymous"></script>
+<script>
+
+d3.csv('responses.csv', function(data){
+	console.log(data[0]);
+	var A = data.reduce(function(a, b) {
+		if (b.headline in a){
+			a[b.headline]++;
+		} else {
+			a[b.headline] = 1;
+		}
+		return a;
+	}, {});
+
+	var B = $.map(A, function(el) { return el });
+	d3.select(".chart")
+	.selectAll("div").data(B).enter().append("div")
+	.style("width", function(d) { 
+		console.log(d);
+		return d / 10 + "px"; 
+	})
+	.text(function(d) { 
+		return d; 
+	});
+})
+
+</script>
+
+</html>
