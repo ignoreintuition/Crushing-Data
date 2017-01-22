@@ -4,49 +4,79 @@
 	<meta charset="UTF-8">
 	<title>Document</title>
 </head>
+
 <style>
-.chart div {
-  font: 20px sans-serif;
-  background-color: steelblue;
-  text-align: right;
-  padding: 5px;
-  margin: 2px;
-  color: white;
+.chart rect {
+	fill: forestgreen;
+}
+
+.chart text {
+	fill: White;
+	font: 10px sans-serif;
+	text-anchor: end;
 }
 </style>
+
 <body>
-	<div class="chart"> </div>	
+	<div class="container">
+		<h1> Survey Responses to Fake News </h1>
+		<svg class="chart"> </svg>
+	</div>	
 </body>
 
 <script src="https://d3js.org/d3.v4.js"></script>
 <script
-  src="https://code.jquery.com/jquery-2.2.4.min.js"
-  integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
-  crossorigin="anonymous"></script>
+src="https://code.jquery.com/jquery-2.2.4.min.js"
+integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
+crossorigin="anonymous"></script>
 <script>
 
+var cfg = {
+	width: 420,
+	barHeight: 20
+};
+
 d3.csv('responses.csv', function(data){
-	console.log(data[0]);
 	var A = data.reduce(function(a, b) {
-		if (b.headline in a){
-			a[b.headline]++;
-		} else {
-			a[b.headline] = 1;
-		}
+		(b.headline in a) ? a[b.headline]['count']++ : a[b.headline] = {"headline": b.headline, "count": 1};
+		(b.recalled_bool in a[b.headline]) ? a[b.headline][b.recalled_bool]++ : a[b.headline][b.recalled_bool] = 1;
 		return a;
 	}, {});
-
 	var B = $.map(A, function(el) { return el });
-	d3.select(".chart")
-	.selectAll("div").data(B).enter().append("div")
-	.style("width", function(d) { 
-		console.log(d);
-		return d / 10 + "px"; 
-	})
-	.text(function(d) { 
-		return d; 
+
+	var x = d3.scaleLinear()
+	.domain([0, d3.max(B)])
+	.range([0, cfg.width]);
+
+	var chart = d3.select(".chart")
+	.attr("width", cfg.width)
+	.attr("height", cfg.barHeight * B.length);
+
+	var bar = chart.selectAll("g")
+	.data(B)
+	.enter().append("g")
+	.attr("transform", function(d, i) {
+		return "translate(0," + i * cfg.barHeight + ")";
 	});
+
+	bar.append("rect")
+	.attr("width", function(d) { 
+		return d.False / 5 + 10;
+	})
+	.attr("height", cfg.barHeight - 1);
+
+	bar.append("text")
+	.attr("x", function(d) {
+		return d.False / 5; 
+	})
+	.attr("y", cfg.barHeight / 2)
+	.attr("dy", ".35em")
+	.text(function(d) {
+		return d.False;
+	})
+
 })
+
 
 </script>
 
