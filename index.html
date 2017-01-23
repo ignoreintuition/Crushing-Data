@@ -21,7 +21,20 @@
 	<div class="container">
 		<h1> Survey Responses to Fake News </h1>
 		<svg class="chart"> </svg>
-	</div>	
+	</div>
+
+	<select name="select" id="headline">
+	<option value="A">Headline A </option>	
+	<option value="B">Headline B </option>	
+	<option value="C">Headline C </option>	
+	<option value="D">Headline D </option>	
+	<option value="E">Headline E </option>	
+	<option value="F">Headline F </option>	
+	<option value="G">Headline G </option>	
+	<option value="H">Headline H </option>	
+	<option value="I">Headline I </option>	
+	<option value="J">Headline J </option>	
+	<option value="K">Headline K </option>	
 </body>
 
 <script src="https://d3js.org/d3.v4.js"></script>
@@ -31,10 +44,12 @@ integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
 crossorigin="anonymous"></script>
 <script>
 
+var headline = "";
 var cfg = {
 	width: 420,
 	barHeight: 20
 };
+var ds;
 
 d3.csv('responses.csv', function(data){
 	var A = data.reduce(function(a, b) {
@@ -42,15 +57,23 @@ d3.csv('responses.csv', function(data){
 		(b.recalled_bool in a[b.headline]) ? a[b.headline][b.recalled_bool]++ : a[b.headline][b.recalled_bool] = 1;
 		return a;
 	}, {});
-	var B = $.map(A, function(el) { return el });
+	ds = $.map(A, function(el) { return el });
+	renderGraph(ds);
+
+})
+
+function renderGraph (B){
+	d3.select(".chart").selectAll("*").remove();
 
 	var x = d3.scaleLinear()
 	.domain([0, d3.max(B)])
 	.range([0, cfg.width]);
 
+	
 	var chart = d3.select(".chart")
 	.attr("width", cfg.width)
 	.attr("height", cfg.barHeight * B.length);
+
 
 	var bar = chart.selectAll("g")
 	.data(B)
@@ -61,9 +84,8 @@ d3.csv('responses.csv', function(data){
 
 	bar.append("rect")
 	.attr("width", function(d) { 
-		return d.False / 5 + 10;
-	})
-	.attr("height", cfg.barHeight - 1);
+		return d.False / 5 + 10;	
+	}).attr("height", cfg.barHeight - 1);
 
 	bar.append("text")
 	.attr("x", function(d) {
@@ -75,8 +97,19 @@ d3.csv('responses.csv', function(data){
 		return d.False;
 	})
 
-})
+}
 
+$("#headline").change(function(){
+	var that = this;
+	function checkValue(value){
+		if (that.value == value.headline){
+			console.log(value);
+			return value;
+		}
+	}
+	renderGraph(ds.filter(checkValue));
+
+});
 
 </script>
 
