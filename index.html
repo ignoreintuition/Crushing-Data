@@ -3,19 +3,8 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+<link rel="stylesheet" type="text/css" href="css/main.css">
 </head>
-
-<style>
-.chart rect {
-	fill: forestgreen;
-}
-
-.chart text {
-	fill: White;
-	font: 10px sans-serif;
-	text-anchor: end;
-}
-</style>
 
 <body>
 	<div class="container">
@@ -42,75 +31,6 @@
 src="https://code.jquery.com/jquery-2.2.4.min.js"
 integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44="
 crossorigin="anonymous"></script>
-<script>
-
-var headline = "";
-var cfg = {
-	width: 420,
-	barHeight: 20
-};
-var ds;
-
-d3.csv('responses.csv', function(data){
-	var A = data.reduce(function(a, b) {
-		(b.headline in a) ? a[b.headline]['count']++ : a[b.headline] = {"headline": b.headline, "count": 1};
-		(b.recalled_bool in a[b.headline]) ? a[b.headline][b.recalled_bool]++ : a[b.headline][b.recalled_bool] = 1;
-		return a;
-	}, {});
-	ds = $.map(A, function(el) { return el });
-	renderGraph(ds);
-
-})
-
-function renderGraph (B){
-	d3.select(".chart").selectAll("*").remove();
-
-	var x = d3.scaleLinear()
-	.domain([0, d3.max(B)])
-	.range([0, cfg.width]);
-
-	
-	var chart = d3.select(".chart")
-	.attr("width", cfg.width)
-	.attr("height", cfg.barHeight * B.length);
-
-
-	var bar = chart.selectAll("g")
-	.data(B)
-	.enter().append("g")
-	.attr("transform", function(d, i) {
-		return "translate(0," + i * cfg.barHeight + ")";
-	});
-
-	bar.append("rect")
-	.attr("width", function(d) { 
-		return d.False / 5 + 10;	
-	}).attr("height", cfg.barHeight - 1);
-
-	bar.append("text")
-	.attr("x", function(d) {
-		return d.False / 5; 
-	})
-	.attr("y", cfg.barHeight / 2)
-	.attr("dy", ".35em")
-	.text(function(d) {
-		return d.False;
-	})
-
-}
-
-$("#headline").change(function(){
-	var that = this;
-	function checkValue(value){
-		if (that.value == value.headline){
-			console.log(value);
-			return value;
-		}
-	}
-	renderGraph(ds.filter(checkValue));
-
-});
-
-</script>
+<script src="js/main.js"></script>
 
 </html>
