@@ -13,8 +13,11 @@ var ds = [];
 
 d3.csv('responses.csv', function(data){
 	var arr = [];
+
 	for (i = 0; i < data.length; i++){
-		if (arr.indexOf(data[i].headline) === -1) {arr.push(data[i].headline);}
+		if (arr.indexOf(data[i].headline) === -1) {
+			arr.push(data[i].headline);
+		}
 	}
 	for (j = 0; j < arr.length; j++){
 		var currObj = data.filter(function(a) {
@@ -22,24 +25,42 @@ d3.csv('responses.csv', function(data){
 		}, []);
 		var reducedObj = currObj.reduce(function(a, b){
 			a.count++;
-			if (b.recalled_bool === "True") { a.recalled_cnt++; }
-			if (b.accuracy_bool === "True") { a.accuracy_cnt++; }
+			if (b.recalled_bool === "True") { 
+				a.recalled_cnt++; 
+			}
+			if (b.accuracy_bool === "True") { 
+				a.accuracy_cnt++; 
+			}
 			return a;
 		}, { "headline": arr[j], "count": 0, "recalled_cnt": 0, "accuracy_cnt": 0 })
 		ds.push(reducedObj);
 	}
-	renderGraph(ds);
+
+	var mappedObj = data.map(function(obj){
+		if (Number(obj.Weightvar) <= 0.80) {	
+			return {"weight" : "low", "count": 1};
+		} else if(Number(obj.Weightvar) > 0.80 && Number(obj.Weightvar) < 1.0) {
+			return {"weight": "Medium", "count": 1};
+		} else if (Number(obj.Weightvar) >= 1.0) {
+			return {"weight": "High", "count": 1};
+		} else {
+			return {"weight": "Unknown", "count": 0};
+		}
+	});
+
+	renderGraph(ds, ".chart", "recalled_cnt");
 });
 
-function renderGraph (B){
-	d3.select(".chart").selectAll("*").remove();
+
+
+function renderGraph (B, id, metric){
+	d3.select(id).selectAll("*").remove();
 
 	var x = d3.scaleLinear()
 	.domain([0, d3.max(B)])
 	.range([0, cfg.width]);
-
 	
-	var chart = d3.select(".chart")
+	var chart = d3.select(id)
 	.attr("width", cfg.width)
 	.attr("height", cfg.barHeight * B.length);
 
@@ -52,17 +73,17 @@ function renderGraph (B){
 
 	bar.append("rect")
 	.attr("width", function(d) { 
-		return d.recalled_cnt / 5 + 10;	
+		return d[metric] / 5 + 10;	
 	}).attr("height", cfg.barHeight - 1);
 
 	bar.append("text")
 	.attr("x", function(d) {
-		return d.recalled_cnt / 5; 
+		return d[metric] / 5; 
 	})
 	.attr("y", cfg.barHeight / 2)
 	.attr("dy", ".35em")
 	.text(function(d) {
-		return d.recalled_cnt;
+		return d[metric];
 	})
 
 };
@@ -75,6 +96,6 @@ $("#headline").change(function(){
 			return value;
 		}
 	}
-	renderGraph(ds.filter(checkValue));
+	renderGraph(ds.filter(checkValue), ".chart", "recalled_cnt");
 
 });

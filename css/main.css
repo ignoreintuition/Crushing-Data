@@ -1,8 +1,8 @@
-.chart rect {
+.chart, .chart2 rect {
 	fill: forestgreen;
 }
 
-.chart text {
+.chart text, .chart2 text {
 	fill: White;
 	font: 10px sans-serif;
 	text-anchor: end;
