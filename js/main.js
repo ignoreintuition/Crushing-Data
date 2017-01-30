@@ -1,44 +1,31 @@
 // Example of how to import data into JS via D3
 // Created by Brian Greig
-// Last updated 1/23/2017
+// Last updated 1/29/2017
 
-var headline = "";
-
+// configuration data to be used in the graphs
 var cfg = {
 	width: 420,
 	barHeight: 20
 };
 
-var ds = [];
+// loads the responses.csv
+// ID, headline, order, recalled, accuracy, Weightvar, accuracy_bool, recalled_bool, is_fake
 
 d3.csv('responses.csv', function(data){
-	var arr = [];
 
-	for (i = 0; i < data.length; i++){
-		if (arr.indexOf(data[i].headline) === -1) {
-			arr.push(data[i].headline);
-		}
-	}
-	for (j = 0; j < arr.length; j++){
-		var currObj = data.filter(function(a) {
-			return a.headline === arr[j]; 
-		}, []);
-		var reducedObj = currObj.reduce(function(a, b){
-			a.count++;
-			if (b.recalled_bool === "True") { 
-				a.recalled_cnt++; 
-			}
-			if (b.accuracy_bool === "True") { 
-				a.accuracy_cnt++; 
-			}
-			return a;
-		}, { "headline": arr[j], "count": 0, "recalled_cnt": 0, "accuracy_cnt": 0 })
-		ds.push(reducedObj);
-	}
+	// calls our groupBy function to aggreate our csv dataset by headline.  
+	// It will automatically aggregated a count metric
+	// We pass two optional parameters for additional metrics (recalled and accuracy)
+	var ds = groupBy(data, "headline", "recalled_bool", "accuracy_bool");
+	
+	// rederGraph will create a graph using the aggregated dataset we created in the last step, assign it to an ID on the page 
+	// using the attribute for the third param metric in the fourth parameter.  Fifth parameter is for scaling the graph.
+	renderGraph(ds, ".chart", "headline", "recalled_bool", 5);
 
+	// mappedObj is a transforming our Weightvar metric into a dimension (low, medium, high)
 	var mappedObj = data.map(function(obj){
 		if (Number(obj.Weightvar) <= 0.80) {	
-			return {"weight" : "low", "count": 1};
+			return {"weight" : "Low", "count": 1};
 		} else if(Number(obj.Weightvar) > 0.80 && Number(obj.Weightvar) < 1.0) {
 			return {"weight": "Medium", "count": 1};
 		} else if (Number(obj.Weightvar) >= 1.0) {
@@ -48,12 +35,16 @@ d3.csv('responses.csv', function(data){
 		}
 	});
 
-	renderGraph(ds, ".chart", "recalled_cnt");
+	// Our second dataset (ds2) will be a groupBy of our mapped object
+	var ds2 = groupBy(mappedObj, "weight");
+
+	// and will be rendered in a graph
+	renderGraph(ds2, ".chart2", "weight", "count", 25);
 });
 
 
-
-function renderGraph (B, id, metric){
+// renderGraph uses D3 to create a simple bar graph for the dataset B 
+function renderGraph (B, id, attr, metric, scale){
 	d3.select(id).selectAll("*").remove();
 
 	var x = d3.scaleLinear()
@@ -73,29 +64,65 @@ function renderGraph (B, id, metric){
 
 	bar.append("rect")
 	.attr("width", function(d) { 
-		return d[metric] / 5 + 10;	
+		return d[metric] / scale + 10;	
 	}).attr("height", cfg.barHeight - 1);
 
 	bar.append("text")
 	.attr("x", function(d) {
-		return d[metric] / 5; 
+		return d[metric] / scale; 
 	})
 	.attr("y", cfg.barHeight / 2)
 	.attr("dy", ".35em")
 	.text(function(d) {
-		return d[metric];
+		return d[attr] + ": " + d[metric];
 	})
 
 };
 
-$("#headline").change(function(){
-	var that = this;
-	function checkValue(value){
-		if (that.value == value.headline){
-			console.log(value);
-			return value;
+// helper function to get all unique values of attr from a dataset data
+function getUniqueValues (data, attr){
+	var arr = [];
+	for (i = 0; i < data.length; i++){
+		if (arr.indexOf(data[i][attr]) === -1) {
+			arr.push(data[i][attr]);
 		}
 	}
-	renderGraph(ds.filter(checkValue), ".chart", "recalled_cnt");
+	return arr;
+}
 
-});
+// groupBy function will aggregate our dataset data by attribute attr
+// and create a summation of metric0 and metric1 as well as an default count
+function groupBy (data, attr, metric0, metric1){
+	var dataset = [];
+	var arr = getUniqueValues(data, attr);
+
+	// for loop will access every unique attribute (from our getUniqueValues function) for aggregation.
+	for (j = 0; j < arr.length; j++){
+		var currObj = data.filter(function(a) {
+			return a[attr] === arr[j]; 
+		}, []);
+
+		// create an initial array value to be passed into our reduce function
+		var initArr = {"count": 0};		
+		initArr[attr] = arr[j];
+		metric0 ? initArr[metric0] = 0 : null;
+		metric1 ? initArr[metric1] = 0: null;
+
+		// reduce function will aggregate each metric if the value is is true 
+		var reducedObj = currObj.reduce(function(a, b){
+			a.count++;
+			if (metric0 && b[metric0] === "True") { 
+				a[metric0]++; 
+			}
+			if (metric1 && b[metric1] === "True") { 
+				a[metric1]++; 
+			}
+			return a;
+		}, initArr)
+
+		// push the reduced object into an array dataset
+		dataset.push(reducedObj);
+	}
+	// return the final array of values. 
+	return dataset;
+}
