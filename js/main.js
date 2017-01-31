@@ -16,7 +16,7 @@ d3.csv('responses.csv', function(data){
 	// calls our groupBy function to aggreate our csv dataset by headline.  
 	// It will automatically aggregated a count metric
 	// We pass two optional parameters for additional metrics (recalled and accuracy)
-	var ds = groupBy(data, "headline", "recalled_bool", "accuracy_bool");
+	var ds = groupBy(data, "headline", ["recalled_bool", "accuracy_bool"]);
 	
 	// rederGraph will create a graph using the aggregated dataset we created in the last step, assign it to an ID on the page 
 	// using the attribute for the third param metric in the fourth parameter.  Fifth parameter is for scaling the graph.
@@ -92,7 +92,7 @@ function getUniqueValues (data, attr){
 
 // groupBy function will aggregate our dataset data by attribute attr
 // and create a summation of metric0 and metric1 as well as an default count
-function groupBy (data, attr, metric0, metric1){
+function groupBy (data, attr, metric){
 	var dataset = [];
 	var arr = getUniqueValues(data, attr);
 
@@ -105,17 +105,21 @@ function groupBy (data, attr, metric0, metric1){
 		// create an initial array value to be passed into our reduce function
 		var initArr = {"count": 0};		
 		initArr[attr] = arr[j];
-		metric0 ? initArr[metric0] = 0 : null;
-		metric1 ? initArr[metric1] = 0: null;
-
+		
+		if (metric) {
+			for (k=0; k< metric.length; k++){
+				metric[k] ? initArr[metric[k]] = 0 : null;
+			}
+		}
 		// reduce function will aggregate each metric if the value is is true 
 		var reducedObj = currObj.reduce(function(a, b){
 			a.count++;
-			if (metric0 && b[metric0] === "True") { 
-				a[metric0]++; 
-			}
-			if (metric1 && b[metric1] === "True") { 
-				a[metric1]++; 
+			if (metric) {
+				for (k=0; k< metric.length; k++){
+					if (metric[k] && b[metric[k]] === "True") { 
+						a[metric[k]]++; 
+					}
+				}
 			}
 			return a;
 		}, initArr)
